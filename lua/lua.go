@@ -8,10 +8,10 @@ package lua
 /*
 #cgo CFLAGS: -Ilua
 #cgo llua LDFLAGS: -llua
-#cgo luaa LDFLAGS: -llua -lm -ldl
-#cgo linux,!llua,!luaa LDFLAGS: -llua5.1
-#cgo darwin,!luaa LDFLAGS: -llua
-#cgo freebsd,!luaa LDFLAGS: -llua-5.1
+#cgo ldlm LDFLAGS: -lm -ldl
+#cgo linux,!ldlm pkg-config: luajit
+#cgo darwin pkg-config: luajit
+#cgo freebsd,!luaa LDFLAGS: -lluajit-5.1
 
 #include <lua.h>
 #include <stdlib.h>

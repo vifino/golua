@@ -6,7 +6,6 @@
 package lua
 
 /*
-#cgo CFLAGS: -Ilua
 #cgo ldlm LDFLAGS: -lm -ldl
 #cgo linux,!ldlm pkg-config: luajit
 #cgo darwin pkg-config: luajit

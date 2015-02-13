@@ -1,7 +1,7 @@
 package lua
 
 /*
-#cgo pkg-config: luajit
+#cgo pkg-config: --static luajit
 
 #include <lua.h>
 #include <lualib.h>

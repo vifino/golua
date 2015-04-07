@@ -9,8 +9,8 @@ import "C"
 import "unsafe"
 
 type LuaError struct {
-	code int
-	message string
+	code       int
+	message    string
 	stackTrace []LuaStackEntry
 }
 
@@ -95,7 +95,7 @@ func (L *State) DoFile(filename string) error {
 	if r := L.LoadFile(filename); r != 0 {
 		return &LuaError{r, L.ToString(-1), L.StackTrace()}
 	}
-	return L.Call(0, LUA_MULTRET);
+	return L.Call(0, LUA_MULTRET)
 }
 
 // Executes the string, returns nil for no errors or the lua error string on failure
@@ -155,6 +155,17 @@ func (L *State) LoadString(s string) int {
 	return int(C.luaL_loadstring(L.s, Cs))
 }
 
+// luaL_loadbuffer
+func (L *State) LoadBuffer(buff string, size int, name string) int {
+	Cbuff := C.CString(buff)
+	Cname := C.CString(name)
+	Csize := C.size_t(size)
+	defer C.free(unsafe.Pointer(Cbuff))
+	defer C.free(unsafe.Pointer(Cname))
+	//defer C.free(unsafe.Pointer(Csize))
+	return int(C.luaL_loadbuffer(L.s, Cbuff, Csize, Cname))
+}
+
 // luaL_newmetatable
 func (L *State) NewMetaTable(tname string) bool {
 	Ctname := C.CString(tname)
@@ -212,4 +223,3 @@ func (L *State) Unref(t int, ref int) {
 func (L *State) Where(lvl int) {
 	C.luaL_where(L.s, C.int(lvl))
 }
-

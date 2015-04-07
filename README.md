@@ -77,7 +77,7 @@ Lua's exceptions are incompatible with Go, golua works around this incompatibili
 
 This means that:
 
-1. In general you can't do any exception handling from Lua, `pcall` and `xpcall` are renamed to `unsafe_pcall` and `unsafe_xpcall`. They are only safe to be called from Lua code that never calls back to Go. Use at your own risk.
+1. `pcall` and `xpcall` are only safe to be called from Lua code that never calls back to Go. Use at your own risk.
 
 2. The call to lua.State.Error, present in previous versions of this library, has been removed as it is nonsensical
 

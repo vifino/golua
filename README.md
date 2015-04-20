@@ -5,11 +5,7 @@ Simplest way to install:
 
 	# go get -u github.com/vifino/golua/lua
 
-Will work as long as your compiler can find a shared object called lua5.1 on linux, or lua anywhere else.
-If your linux system uses "lua" as the shared object name for lua (for example, Fedora Core does this) you can install using:
-
-	# go get -u -tags llua github.com/vifino/golua/lua
-
+Will work as long as your compiler can find a pkgconfig definition of luajit.
 
 You can then try to run the examples:
 
@@ -103,13 +99,13 @@ ON THREADS AND COROUTINES
 ODDS AND ENDS
 ---------------------
 
-* Support for lua 5.2 is in the lua5.2 branch, this branch only supports lua5.1.
-* Compiling from source yields only a static link library (liblua.a), you can either produce the dynamic link library on your own or use the `luaa` build tag.
+* This is the LuaJIT version of the original. It doesn't build with normal Lua, instead it uses the faster LuaJIT.
 
 CONTRIBUTORS
 ---------------------
 
 * Adam Fitzgerald (original author)
+* Adrian "vifino" Pistol (Maintainer of this Fork)
 * Alessandro Arzilli
 * Steve Donovan
 * Harley Laue
@@ -124,7 +120,7 @@ CONTRIBUTORS
 SEE ALSO
 ---------------------
 
-[Luar](https://github.com/stevedonovan/luar/) is a reflection layer on top of golua API providing a simplified way to publish go functions to a Lua VM.
+[Luar](https://github.com/vifino/luar/) is a reflection layer on top of golua API providing a simplified way to publish go functions to a Lua VM.
 
 Licensing
 -------------

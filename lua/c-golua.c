@@ -409,7 +409,7 @@ int clua_writer(lua_State* L,const void* p,size_t sz,void* ud) {
 	return 0;
 }
 
-char* clua_fdump(lua_State *L, int* sz) {
+char* clua_fdump(lua_State *L, size_t* sz) {
 	clua_writerdata ud;
 	ud.data=NULL;
 	ud.sz=0;

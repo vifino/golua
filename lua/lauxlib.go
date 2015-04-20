@@ -226,7 +226,6 @@ func (L *State) Where(lvl int) {
 
 // clua_fdump
 func (L *State) FDump() string {
-	var sz *C.int
-	defer C.free(unsafe.Pointer(sz))
-	return C.GoStringN(C.clua_fdump(L.s, sz), *sz)
+	var sz C.size_t
+	return C.GoString(C.clua_fdump(L.s, &sz))
 }

@@ -226,6 +226,5 @@ func (L *State) Where(lvl int) {
 
 // clua_fdump
 func (L *State) FDump() string {
-	var sz C.size_t
-	return C.GoString(C.clua_fdump(L.s, &sz))
+	return C.GoString(C.clua_fdump(L.s))
 }

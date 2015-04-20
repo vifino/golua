@@ -5,7 +5,7 @@ Simplest way to install:
 
 	# go get -u github.com/vifino/golua/lua
 
-Will work as long as your compiler can find a shared object called luajit-5.1 on linux, or luajit-2.0 anywhere else.
+Will work as long as your compiler can find a pkgconfig definition of luajit.
 
 You can then try to run the examples:
 

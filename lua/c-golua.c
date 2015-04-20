@@ -394,4 +394,17 @@ void clua_setexecutionlimit(lua_State* L, int n)
 	lua_sethook(L, &clua_hook_function, LUA_MASKCOUNT, n);
 }
 
-
+typedef struct {
+	char* data;
+	size_t sz;
+} clua_writerdata;
+lua_Writer clua_writer(lua_State* L,const void* p,size_t sz,clua_writerdata* ud) {
+	ud->data=(char*)realloc((void*)ud->data,ud->sz+sz);
+	memcpy((void*)ud->data+ud->sz,p,sz);
+	ud->sz+=sz;
+}
+char* clua_dump(lua_State *L) {
+	clua_writerdata ud;
+	lua_dump(L,writer,(void*)&ud);
+	return ud.data;
+}

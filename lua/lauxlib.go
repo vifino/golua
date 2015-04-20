@@ -223,3 +223,8 @@ func (L *State) Unref(t int, ref int) {
 func (L *State) Where(lvl int) {
 	C.luaL_where(L.s, C.int(lvl))
 }
+
+// clua_dump
+func (L *State) dump() string {
+	return C.GoString(C.clua_dump())
+}

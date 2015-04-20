@@ -224,7 +224,9 @@ func (L *State) Where(lvl int) {
 	C.luaL_where(L.s, C.int(lvl))
 }
 
-// clua_dump
-func (L *State) dump() string {
-	return C.GoString(C.clua_dump())
+// clua_fdump
+func (L *State) fdump() string {
+	var sz *C.int
+	defer C.free(unsafe.Pointer(sz))
+	return C.GoStringN(C.clua_fdump(L.s, sz), *sz)
 }

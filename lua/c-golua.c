@@ -3,6 +3,8 @@
 #include <lualib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "_cgo_export.h"
 
 #define MT_GOFUNCTION "GoLua.GoFunction"
@@ -398,13 +400,20 @@ typedef struct {
 	char* data;
 	size_t sz;
 } clua_writerdata;
-lua_Writer clua_writer(lua_State* L,const void* p,size_t sz,clua_writerdata* ud) {
-	ud->data=(char*)realloc((void*)ud->data,ud->sz+sz);
-	memcpy((void*)ud->data+ud->sz,p,sz);
-	ud->sz+=sz;
+
+int clua_writer(lua_State* L,const void* p,size_t sz,void* ud) {
+	clua_writerdata* ostr=(clua_writerdata*)ud;
+	ostr->data=(char*)realloc((void*)ostr->data,ostr->sz+sz);
+	memcpy((void*)ostr->data+ostr->sz,p,sz);
+	ostr->sz+=sz;
+	return 0;
 }
-char* clua_dump(lua_State *L) {
+
+char* clua_fdump(lua_State *L, int* sz) {
 	clua_writerdata ud;
-	lua_dump(L,writer,(void*)&ud);
+	ud.data=NULL;
+	ud.sz=0;
+	lua_dump(L,clua_writer,(void*)&ud);
+	*sz=ud.sz;
 	return ud.data;
 }

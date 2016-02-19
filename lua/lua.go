@@ -30,12 +30,9 @@ type LuaStackEntry struct {
 }
 
 func newState(L *C.lua_State) *State {
-	var newstatei interface{}
-	newstate := &State{L, make([]interface{}, 0, 8), make([]uint, 0, 8)}
-	newstatei = newstate
-	ns1 := unsafe.Pointer(&newstatei)
-	ns2 := (*C.GoInterface)(ns1)
-	C.clua_setgostate(L, *ns2) //hacky....
+	newstate := &State{L, -1, make([]interface{}, 0, 8), make([]uint, 0, 8)}
+	registerGoState(newstate)
+	C.clua_setgostate(L, C.int(newstate.Index))
 	C.clua_initstate(L)
 	return newstate
 }
@@ -100,6 +97,14 @@ func (L *State) unregister(fid uint) {
 func (L *State) PushGoFunction(f LuaGoFunction) {
 	fid := L.register(f)
 	C.clua_pushgofunction(L.s, C.uint(fid))
+}
+
+// PushGoClosure pushes a lua.LuaGoFunction to the stack wrapped in a Closure.
+// this permits the go function to reflect lua type 'function' when checking with type()
+// this implements behaviour akin to lua_pushcfunction() in lua C API.
+func (L *State) PushGoClosure(f LuaGoFunction) {
+	L.PushGoFunction(f)      // leaves Go function userdata on stack
+	C.clua_pushcallback(L.s) // wraps the userdata object with a closure making it into a function
 }
 
 // Sets a metamethod to execute a go function
@@ -221,6 +226,7 @@ func (L *State) CheckStack(extra int) bool {
 // lua_close
 func (L *State) Close() {
 	C.lua_close(L.s)
+	unregisterGoState(L)
 }
 
 // lua_concat
@@ -343,7 +349,7 @@ func (L *State) NewThread() *State {
 	//TODO: should have same lists as parent
 	//		but may complicate gc
 	s := C.lua_newthread(L.s)
-	return &State{s, nil, nil}
+	return &State{s, -1, nil, nil}
 }
 
 // lua_next

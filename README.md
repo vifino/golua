@@ -101,6 +101,17 @@ ODDS AND ENDS
 
 * This is the LuaJIT version of the original. It doesn't build with normal Lua, instead it uses the faster LuaJIT.
 
+LUAJIT
+---------------------
+
+To link with [luajit-2.0.x](http://luajit.org/luajit.html), you can use CGO_CFLAGS and CGO_LDFLAGS environment variables
+
+```
+$ CGO_CFLAGS=`pkg-config luajit --cflags`
+$ CGO_LDFLAGS=`pkg-config luajit --libs`
+$ go get -f -u github.com/aarzilli/golua/lua
+```
+
 CONTRIBUTORS
 ---------------------
 
@@ -116,6 +127,8 @@ CONTRIBUTORS
 * hsinhoyeh
 * Viktor Palmkvist
 * HongZhen Peng
+* Admin36
+* Pierre Neidhardt (@Ambrevar)
 
 SEE ALSO
 ---------------------

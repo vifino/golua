@@ -11,6 +11,7 @@ import "C"
 
 import (
 	"reflect"
+	"sync"
 	"unsafe"
 )
 
@@ -26,6 +27,9 @@ type State struct {
 	// Wrapped lua_State object
 	s *C.lua_State
 
+	// index of this object inside the goStates array
+	Index int
+
 	// Registry of go object that have been pushed to Lua VM
 	registry []interface{}
 
@@ -33,9 +37,35 @@ type State struct {
 	freeIndices []uint
 }
 
+var goStates []*State
+var goStatesMutex sync.Mutex
+
+func init() {
+	goStates = make([]*State, 0, 16)
+}
+
+func registerGoState(L *State) {
+	goStatesMutex.Lock()
+	defer goStatesMutex.Unlock()
+	L.Index = len(goStates)
+	goStates = append(goStates, L)
+}
+
+func unregisterGoState(L *State) {
+	goStatesMutex.Lock()
+	defer goStatesMutex.Unlock()
+	goStates[L.Index] = nil
+}
+
+func getGoState(gostateindex int) *State {
+	goStatesMutex.Lock()
+	defer goStatesMutex.Unlock()
+	return goStates[gostateindex]
+}
+
 //export golua_callgofunction
-func golua_callgofunction(L interface{}, fid uint) int {
-	L1 := L.(*State)
+func golua_callgofunction(gostateindex int, fid uint) int {
+	L1 := getGoState(gostateindex)
 	if fid < 0 {
 		panic(&LuaError{0, "Requested execution of an unknown function", L1.StackTrace()})
 	}
@@ -44,8 +74,8 @@ func golua_callgofunction(L interface{}, fid uint) int {
 }
 
 //export golua_interface_newindex_callback
-func golua_interface_newindex_callback(Li interface{}, iid uint, field_name_cstr *C.char) int {
-	L := Li.(*State)
+func golua_interface_newindex_callback(gostateindex int, iid uint, field_name_cstr *C.char) int {
+	L := getGoState(gostateindex)
 	iface := L.registry[iid]
 	ifacevalue := reflect.ValueOf(iface).Elem()
 
@@ -65,7 +95,7 @@ func golua_interface_newindex_callback(Li interface{}, iid uint, field_name_cstr
 			fval.SetBool(int(C.lua_toboolean(L.s, 3)) != 0)
 			return 1
 		} else {
-			L.PushString("Wrong assignment to field "+field_name)
+			L.PushString("Wrong assignment to field " + field_name)
 			return -1
 		}
 
@@ -82,7 +112,7 @@ func golua_interface_newindex_callback(Li interface{}, iid uint, field_name_cstr
 			fval.SetInt(int64(C.lua_tointeger(L.s, 3)))
 			return 1
 		} else {
-			L.PushString("Wrong assignment to field "+field_name)
+			L.PushString("Wrong assignment to field " + field_name)
 			return -1
 		}
 
@@ -99,7 +129,7 @@ func golua_interface_newindex_callback(Li interface{}, iid uint, field_name_cstr
 			fval.SetUint(uint64(C.lua_tointeger(L.s, 3)))
 			return 1
 		} else {
-			L.PushString("Wrong assignment to field "+field_name)
+			L.PushString("Wrong assignment to field " + field_name)
 			return -1
 		}
 
@@ -108,7 +138,7 @@ func golua_interface_newindex_callback(Li interface{}, iid uint, field_name_cstr
 			fval.SetString(C.GoString(C.lua_tolstring(L.s, 3, nil)))
 			return 1
 		} else {
-			L.PushString("Wrong assignment to field "+field_name)
+			L.PushString("Wrong assignment to field " + field_name)
 			return -1
 		}
 
@@ -119,18 +149,18 @@ func golua_interface_newindex_callback(Li interface{}, iid uint, field_name_cstr
 			fval.SetFloat(float64(C.lua_tonumber(L.s, 3)))
 			return 1
 		} else {
-			L.PushString("Wrong assignment to field "+field_name)
+			L.PushString("Wrong assignment to field " + field_name)
 			return -1
 		}
 	}
 
-	L.PushString("Unsupported type of field "+field_name+": "+fval.Type().String())
+	L.PushString("Unsupported type of field " + field_name + ": " + fval.Type().String())
 	return -1
 }
 
 //export golua_interface_index_callback
-func golua_interface_index_callback(Li interface{}, iid uint, field_name *C.char) int {
-	L := Li.(*State)
+func golua_interface_index_callback(gostateindex int, iid uint, field_name *C.char) int {
+	L := getGoState(gostateindex)
 	iface := L.registry[iid]
 	ifacevalue := reflect.ValueOf(iface).Elem()
 
@@ -180,20 +210,20 @@ func golua_interface_index_callback(Li interface{}, iid uint, field_name *C.char
 		return 1
 	}
 
-	L.PushString("Unsupported type of field: "+fval.Type().String())
+	L.PushString("Unsupported type of field: " + fval.Type().String())
 	return -1
 }
 
 //export golua_gchook
-func golua_gchook(L interface{}, id uint) int {
-	L1 := L.(*State)
+func golua_gchook(gostateindex int, id uint) int {
+	L1 := getGoState(gostateindex)
 	L1.unregister(id)
 	return 0
 }
 
 //export golua_callpanicfunction
-func golua_callpanicfunction(L interface{}, id uint) int {
-	L1 := L.(*State)
+func golua_callpanicfunction(gostateindex int, id uint) int {
+	L1 := getGoState(gostateindex)
 	f := L1.registry[id].(LuaGoFunction)
 	return f(L1)
 }
@@ -214,8 +244,8 @@ func golua_callallocf(fp uintptr, ptr uintptr, osize uint, nsize uint) uintptr {
 }
 
 //export go_panic_msghandler
-func go_panic_msghandler(Li interface{}, z *C.char) {
-	L := Li.(*State)
+func go_panic_msghandler(gostateindex int, z *C.char) {
+	L := getGoState(gostateindex)
 	s := C.GoString(z)
 
 	panic(&LuaError{LUA_ERRERR, s, L.StackTrace()})
